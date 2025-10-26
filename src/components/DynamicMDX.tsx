@@ -13,11 +13,12 @@ interface DynamicMDXProps {
 }
 
 // Custom remark plugin to wrap content between --- in Slide components
-function remarkSlides() {
+function remarkLazySlides() {
   return (tree: any) => {
     const children = tree.children
     const newChildren: any[] = []
     let slideContent: any[] = []
+    let slideCounter = 0
     
     children.forEach((node: any) => {
       if (node.type === 'thematicBreak') {
@@ -26,7 +27,7 @@ function remarkSlides() {
           newChildren.push({
             type: 'mdxJsxFlowElement',
             name: 'Slide',
-            attributes: [],
+            attributes: [{ type: 'mdxJsxAttribute', name: 'slideIndex', value: String(slideCounter++) }],
             children: slideContent
           })
           slideContent = []
@@ -41,7 +42,7 @@ function remarkSlides() {
       newChildren.push({
         type: 'mdxJsxFlowElement',
         name: 'Slide',
-        attributes: [],
+        attributes: [{ type: 'mdxJsxAttribute', name: 'slideIndex', value: String(slideCounter++) }],
         children: slideContent
       })
     }
@@ -54,6 +55,7 @@ export function DynamicMDX({ content, fileName, images, onBack }: DynamicMDXProp
   const [MDXContent, setMDXContent] = useState<any>(null)
   const [error, setError] = useState<string | null>(null)
   const [progress, setProgress] = useState(0)
+  const [currentSlide, setCurrentSlide] = useState(0)
   const containerRef = useRef<HTMLElement>(null)
 
   // Create custom img and video components that use the media from the ZIP
@@ -61,28 +63,44 @@ export function DynamicMDX({ content, fileName, images, onBack }: DynamicMDXProp
     ...components,
     img: (props: any) => {
       const { src, alt, ...rest } = props
-      // Try to find the image in the images object
       const imageSrc = images[src] || src
       return <img src={imageSrc} alt={alt} {...rest} />
     },
     video: (props: any) => {
       const { src, ...rest } = props
-      // Try to find the video in the images object (we use the same object for all media)
       const videoSrc = images[src] || src
       return <video src={videoSrc} controls {...rest} />
+    },
+    Slide: (props: any) => {
+      const { slideIndex, ...rest } = props
+      // Virtualize slides: only render the current, previous and next slide
+      if (
+        slideIndex >= currentSlide - 1 &&
+        slideIndex <= currentSlide + 1
+      ) {
+        return <components.Slide {...rest} />
+      }
+      // Render a placeholder for other slides to maintain scroll position
+      return <div style={{ height: '100vh' }} />
     }
   }
 
   // Focus the container when MDX content is loaded
   useEffect(() => {
     if (MDXContent && containerRef.current) {
-      // Small delay to ensure DOM is ready
       const timer = setTimeout(() => {
         containerRef.current?.focus()
       }, 100)
       return () => clearTimeout(timer)
     }
   }, [MDXContent])
+
+  // Cleanup object URLs when the component unmounts
+  useEffect(() => {
+    return () => {
+      Object.values(images).forEach(url => URL.revokeObjectURL(url))
+    }
+  }, [images])
 
   useEffect(() => {
     const container = containerRef.current
@@ -93,19 +111,26 @@ export function DynamicMDX({ content, fileName, images, onBack }: DynamicMDXProp
       const scrollHeight = container.scrollHeight - container.clientHeight
       const scrollProgress = (scrollTop / scrollHeight) * 100
       setProgress(scrollProgress)
+
+      // Update current slide based on scroll position
+      const newCurrentSlide = Math.round(container.scrollTop / container.clientHeight)
+      if (newCurrentSlide !== currentSlide) {
+        setCurrentSlide(newCurrentSlide)
+      }
     }
 
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
         e.preventDefault()
         const direction = e.key === 'ArrowLeft' ? -1 : 1
-        container.scrollBy({
-          top: container.clientHeight * direction,
+        const newSlide = currentSlide + direction
+
+        container.scrollTo({
+          top: newSlide * container.clientHeight,
           behavior: 'smooth'
         })
       }
       
-      // ESC to go back
       if (e.key === 'Escape') {
         onBack()
       }
@@ -118,7 +143,7 @@ export function DynamicMDX({ content, fileName, images, onBack }: DynamicMDXProp
       container.removeEventListener('scroll', handleScroll)
       container.removeEventListener('keydown', handleKeyDown)
     }
-  }, [onBack, MDXContent])
+  }, [onBack, MDXContent, currentSlide])
 
   useEffect(() => {
     const compileMDX = async () => {
@@ -126,7 +151,7 @@ export function DynamicMDX({ content, fileName, images, onBack }: DynamicMDXProp
         setError(null)
         const result = await evaluate(content, {
           ...runtime,
-          remarkPlugins: [remarkMath, remarkSlides],
+          remarkPlugins: [remarkMath, remarkLazySlides],
           rehypePlugins: [rehypeKatex],
         })
         setMDXContent(() => result.default)

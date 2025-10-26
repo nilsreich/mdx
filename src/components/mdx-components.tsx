@@ -22,10 +22,11 @@ interface HighlightProps {
 interface SlideProps {
   children: ReactNode
   className?: string
+  slideIndex?: number
 }
 
 // Slide Component for presentation-style sections
-export const Slide = ({ children, className = '' }: SlideProps) => {
+export const Slide = ({ children, className = '', slideIndex }: SlideProps) => {
   return (
     <section className={`min-h-screen snap-start snap-always flex items-center ${className}`}>
       <div className="prose prose-slate lg:prose-xl max-w-5xl mx-auto px-8 py-12 dark:prose-invert w-full">
