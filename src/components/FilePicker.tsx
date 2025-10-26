@@ -26,8 +26,12 @@ export function FilePicker({ onFileLoad }: FilePickerProps) {
       // Check if it's an image or video
       else if (/\.(png|jpg|jpeg|gif|svg|webp|mp4|webm|ogg|mov)$/i.test(filename)) {
         const blob = await zipEntry.async('blob')
-        const objectUrl = URL.createObjectURL(blob)
-        images[filename] = objectUrl
+        const dataUrl = await new Promise<string>((resolve) => {
+          const reader = new FileReader()
+          reader.onloadend = () => resolve(reader.result as string)
+          reader.readAsDataURL(blob)
+        })
+        images[filename] = dataUrl
       }
     }
     
