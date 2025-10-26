@@ -1,0 +1,143 @@
+# Welcome to MDX with KaTeX and Custom Components
+
+This is an example document demonstrating **MDX** with **KaTeX** math rendering and custom React components.
+
+## Math Rendering
+
+### Inline Math
+
+You can write inline math like $f(x) = x^2 + 2x + 1$ or $E = mc^2$ directly in your text.
+
+### Block Math
+
+For more complex equations, use block math:
+
+$$
+\int_{-\infty}^{\infty} e^{-x^2} dx = \sqrt{\pi}
+$$
+
+$$
+\frac{d}{dx}\left( \int_{0}^{x} f(u)\,du\right)=f(x)
+$$
+
+### Matrix Example
+
+$$
+\begin{bmatrix}
+a & b \\
+c & d
+\end{bmatrix}
+\begin{bmatrix}
+x \\
+y
+\end{bmatrix}
+=
+\begin{bmatrix}
+ax + by \\
+cx + dy
+\end{bmatrix}
+$$
+
+## Custom Components
+
+### Callout Component
+
+<Callout type="info">
+This is an **info** callout with some important information!
+</Callout>
+
+<Callout type="warning">
+⚠️ This is a **warning** callout. Be careful!
+</Callout>
+
+<Callout type="success">
+✅ This is a **success** callout. Great job!
+</Callout>
+
+### Code Block Component
+
+<CodeBlock language="javascript" title="hello.js">
+{`function greet(name) {
+  console.log(\`Hello, \${name}!\`);
+}
+
+greet('World');`}
+</CodeBlock>
+
+<CodeBlock language="python" title="fibonacci.py">
+{`def fibonacci(n):
+    """Generate Fibonacci sequence up to n terms."""
+    a, b = 0, 1
+    result = []
+    
+    for _ in range(n):
+        result.append(a)
+        a, b = b, a + b
+    
+    return result
+
+# Generate first 10 Fibonacci numbers
+fib_sequence = fibonacci(10)
+print(f"Fibonacci sequence: {fib_sequence}")`}
+</CodeBlock>
+
+### Highlight Component
+
+You can <Highlight color="yellow">highlight important text</Highlight> or use different colors like <Highlight color="blue">blue</Highlight> or <Highlight color="green">green</Highlight>.
+
+## Combining Math and Components
+
+<Callout type="info">
+The quadratic formula is: $x = \frac{-b \pm \sqrt{b^2 - 4ac}}{2a}$
+</Callout>
+
+## More Math Examples
+
+### Greek Letters and Symbols
+
+$\alpha, \beta, \gamma, \Delta, \Sigma, \Omega$
+
+### Fractions and Subscripts
+
+$$
+f(x) = \frac{1}{x^2 + 1}, \quad x_1, x_2, \ldots, x_n
+$$
+
+### Summation and Limits
+
+$$
+\sum_{i=1}^{n} i = \frac{n(n+1)}{2}
+$$
+
+$$
+\lim_{x \to \infty} \frac{1}{x} = 0
+$$
+
+## Python Code Examples
+
+<CodeBlock language="python" title="data_analysis.py">
+{`import numpy as np
+import matplotlib.pyplot as plt
+
+# Generate sample data
+x = np.linspace(0, 2 * np.pi, 100)
+y1 = np.sin(x)
+y2 = np.cos(x)
+
+# Create visualization
+plt.figure(figsize=(10, 6))
+plt.plot(x, y1, label='sin(x)', color='blue')
+plt.plot(x, y2, label='cos(x)', color='red')
+plt.xlabel('x')
+plt.ylabel('y')
+plt.title('Trigonometric Functions')
+plt.legend()
+plt.grid(True)
+plt.show()`}
+</CodeBlock>
+
+---
+
+This is just a sample of what you can do with MDX, KaTeX, custom components, and **syntax highlighting**! 
+
+Scroll up and down to experience the **smooth scroll snap** behavior on section headings. ✨
