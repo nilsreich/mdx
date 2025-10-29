@@ -8,6 +8,11 @@ interface FilePickerProps {
 export function FilePicker({ onFileLoad }: FilePickerProps) {
   const [isDragging, setIsDragging] = useState(false)
 
+  const processMdxFile = async (file: File) => {
+    const content = await file.text()
+    return { content, fileName: file.name, images: {} }
+  }
+
   const processZipFile = async (file: File) => {
     const zip = new JSZip()
     const zipContent = await zip.loadAsync(file)
@@ -42,13 +47,25 @@ export function FilePicker({ onFileLoad }: FilePickerProps) {
     return { content: mdxContent, fileName: mdxFileName, images }
   }
 
+  const processFile = async (file: File) => {
+    if (file.name.endsWith('.mdx') || file.name.endsWith('.md')) {
+      return await processMdxFile(file)
+    } else if (file.name.endsWith('.zip')) {
+      return await processZipFile(file)
+    } else {
+      throw new Error('Nicht unterstütztes Dateiformat. Bitte wähle eine .mdx, .md oder .zip Datei.')
+    }
+  }
+
   const handleFileSelect = async () => {
     try {
       const [fileHandle] = await (window as any).showOpenFilePicker({
         types: [
           {
-            description: 'ZIP Files',
+            description: 'MDX Presentations',
             accept: {
+              'text/mdx': ['.mdx'],
+              'text/markdown': ['.md'],
               'application/zip': ['.zip']
             }
           }
@@ -57,7 +74,7 @@ export function FilePicker({ onFileLoad }: FilePickerProps) {
       })
 
       const file = await fileHandle.getFile()
-      const { content, fileName, images } = await processZipFile(file)
+      const { content, fileName, images } = await processFile(file)
       onFileLoad(content, fileName, images)
     } catch (err) {
       if ((err as Error).name !== 'AbortError') {
@@ -72,15 +89,19 @@ export function FilePicker({ onFileLoad }: FilePickerProps) {
     setIsDragging(false)
 
     const files = Array.from(e.dataTransfer.files)
-    const zipFile = files.find(f => f.name.endsWith('.zip'))
+    const file = files.find(f => 
+      f.name.endsWith('.zip') || 
+      f.name.endsWith('.mdx') || 
+      f.name.endsWith('.md')
+    )
 
-    if (zipFile) {
+    if (file) {
       try {
-        const { content, fileName, images } = await processZipFile(zipFile)
+        const { content, fileName, images } = await processFile(file)
         onFileLoad(content, fileName, images)
       } catch (err) {
-        console.error('Fehler beim Verarbeiten der ZIP-Datei:', err)
-        alert('Fehler beim Verarbeiten der ZIP-Datei: ' + (err as Error).message)
+        console.error('Fehler beim Verarbeiten der Datei:', err)
+        alert('Fehler beim Verarbeiten der Datei: ' + (err as Error).message)
       }
     }
   }
@@ -95,14 +116,14 @@ export function FilePicker({ onFileLoad }: FilePickerProps) {
   }
 
   return (
-    <div className="h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800">
+    <div className="h-screen flex items-center justify-center bg-gradient-to-br from-neutral-50 to-neutral-100 dark:from-neutral-950 dark:to-neutral-900">
       <div className="max-w-2xl w-full mx-auto px-8">
         <div className="text-center mb-12">
-          <h1 className="text-5xl font-bold mb-4 text-slate-900 dark:text-slate-100">
+          <h1 className="text-5xl font-bold mb-4 text-neutral-900 dark:text-neutral-100">
             MDX Präsentation
           </h1>
-          <p className="text-xl text-slate-600 dark:text-slate-400">
-            Öffne eine ZIP-Datei mit deiner MDX-Präsentation
+          <p className="text-xl text-neutral-600 dark:text-neutral-400">
+            Öffne eine MDX-Datei oder ZIP-Datei mit deiner Präsentation
           </p>
         </div>
 
@@ -114,13 +135,13 @@ export function FilePicker({ onFileLoad }: FilePickerProps) {
             border-4 border-dashed rounded-2xl p-16 transition-all duration-200
             ${isDragging 
               ? 'border-blue-500 bg-blue-50 dark:bg-blue-950/20 scale-105' 
-              : 'border-slate-300 dark:border-slate-700 hover:border-slate-400 dark:hover:border-slate-600'
+              : 'border-neutral-300 dark:border-neutral-700 hover:border-neutral-400 dark:hover:border-neutral-600'
             }
           `}
         >
           <div className="text-center">
             <svg
-              className="mx-auto h-24 w-24 text-slate-400 dark:text-slate-600 mb-6"
+              className="mx-auto h-24 w-24 text-neutral-400 dark:text-neutral-600 mb-6"
               fill="none"
               viewBox="0 0 24 24"
               stroke="currentColor"
@@ -133,10 +154,10 @@ export function FilePicker({ onFileLoad }: FilePickerProps) {
               />
             </svg>
 
-            <p className="text-lg text-slate-700 dark:text-slate-300 mb-4">
-              Ziehe eine ZIP-Datei hierher
+            <p className="text-lg text-neutral-700 dark:text-neutral-300 mb-4">
+              Ziehe eine MDX- oder ZIP-Datei hierher
             </p>
-            <p className="text-sm text-slate-500 dark:text-slate-500 mb-8">
+            <p className="text-sm text-neutral-500 dark:text-neutral-500 mb-8">
               oder
             </p>
 
@@ -153,18 +174,21 @@ export function FilePicker({ onFileLoad }: FilePickerProps) {
                 focus:outline-none focus:ring-4 focus:ring-blue-500/50
               "
             >
-              ZIP-Datei auswählen
+              Datei auswählen
             </button>
           </div>
         </div>
 
-        <div className="mt-12 text-center text-sm text-slate-500 dark:text-slate-500">
-          <p className="mb-2">📦 Die ZIP-Datei sollte enthalten:</p>
+        <div className="mt-12 text-center text-sm text-neutral-500 dark:text-neutral-500">
+          <p className="mb-2">� Unterstützte Formate:</p>
+          <p className="mb-2">• Direkte MDX-Datei (.mdx oder .md) - nur Text, keine Bilder/Videos</p>
+          <p className="mb-4">• ZIP-Datei (.zip) - mit MDX + optional Bilder & Videos</p>
+          <p className="mb-2">📦 ZIP-Datei kann enthalten:</p>
           <p className="mb-2">• Eine MDX-Datei (.mdx oder .md)</p>
           <p className="mb-2">• Optional: Bilder (PNG, JPG, GIF, SVG, WebP)</p>
           <p>• Optional: Videos (MP4, WebM, OGG, MOV)</p>
           <p className="mt-4">
-            📜 Nutze <code className="px-2 py-1 bg-slate-200 dark:bg-slate-800 rounded">---</code> als Trennung zwischen Slides
+            📜 Nutze <code className="px-2 py-1 bg-neutral-200 dark:bg-neutral-800 rounded">---</code> als Trennung zwischen Slides
           </p>
         </div>
       </div>

@@ -11,7 +11,7 @@ if (!rootElement) {
 
 createRoot(rootElement).render(
   <StrictMode>
-    <div className="bg-white dark:bg-slate-900">
+    <div className="bg-white dark:bg-neutral-950">
       <App />
     </div>
   </StrictMode>
